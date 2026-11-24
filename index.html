@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#111827">
+<title>もぐワールド</title>
+<style>
+:root{--bg:#101827;--panel:#1d2a40;--panel2:#263650;--gold:#f5c96a;--text:#f5f7fb;--muted:#aab8cc;--red:#ef7272;--blue:#75b8ff;--green:#7cdaa7}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#263956,#101827 65%);color:var(--text);font-family:system-ui,-apple-system,"Hiragino Kaku Gothic ProN",sans-serif;min-height:100vh}
+button{font:inherit;cursor:pointer;border:0;border-radius:12px;padding:12px 16px;font-weight:700;color:#172033;background:var(--gold);touch-action:manipulation}
+button:disabled{opacity:.4;cursor:not-allowed}.secondary{background:#405574;color:white}.danger{background:#a94750;color:white}
+header{text-align:center;padding:18px 12px 8px}h1{margin:0;color:var(--gold);letter-spacing:.12em;font-size:clamp(25px,6vw,38px)}header p{margin:5px;color:var(--muted);font-size:13px}
+main{max-width:900px;margin:auto;padding:10px 12px 30px}.screen{display:none}.screen.active{display:block}
+.panel{background:linear-gradient(145deg,#23334d,#18253a);border:1px solid #3c5270;border-radius:18px;padding:16px;margin:10px 0;box-shadow:0 10px 28px #0003}
+.center{text-align:center}.big{font-size:22px;font-weight:800;color:var(--gold)}.muted{color:var(--muted);font-size:13px}
+.menu-buttons{display:grid;gap:10px;max-width:440px;margin:18px auto}.menu-buttons button{font-size:17px;padding:16px}
+.topline{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
+.stats{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.stat{background:#101b2c;padding:7px 10px;border-radius:10px;font-size:13px}
+.hpbar{height:9px;background:#0b1422;border-radius:99px;overflow:hidden;margin-top:8px}.hpfill{height:100%;background:linear-gradient(90deg,#e75d69,#ff9c78);transition:width .2s}
+.battlefield{display:grid;grid-template-columns:1fr 1fr;gap:10px}.fighter{background:#17243a;border:1px solid #405574;border-radius:15px;padding:12px;min-width:0}.fighter h3{margin:0 0 5px}.avatar{font-size:32px}.hand{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:12px}
+.card{background:linear-gradient(160deg,#f4e8c9,#d8c69e);color:#253047;border:2px solid #fff1c2;border-radius:13px;padding:10px 8px;min-height:112px;text-align:left;display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 4px 0 #8b7959}
+.card .ico{font-size:25px}.card strong{font-size:14px}.card small{font-size:11px;line-height:1.35}.card em{font-size:11px;font-style:normal;font-weight:800;color:#805c20}
+.log{height:125px;overflow:auto;background:#0d1726;border-radius:12px;padding:10px;font-size:12px;color:#d5dfed;line-height:1.65}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.actions button{flex:1}
+input{width:100%;padding:13px;border-radius:10px;border:1px solid #526984;background:#101b2c;color:white;font-size:16px;margin:8px 0}
+.note{background:#14243a;border-left:3px solid var(--gold);padding:10px 12px;border-radius:8px;color:#cbd7e8;font-size:13px;line-height:1.6}
+footer{text-align:center;color:#8292a9;font-size:11px;padding:12px}
+@media(min-width:650px){.hand{grid-template-columns:repeat(4,minmax(0,1fr))}.card{min-height:135px}}
+</style>
+</head>
+<body>
+<header><h1>もぐワールド</h1><p>星々の力を集め、最後の一人になるまで戦え。</p></header>
+<main>
+<section id="home" class="screen active">
+ <div class="panel center"><div style="font-size:54px">⚔️</div><div class="big">神域への門が開かれた</div><p class="muted">カードを選び、読み合い、勝利をつかもう。</p></div>
+ <div class="menu-buttons">
+  <button onclick="startGame()">🤖 CPUと対戦</button>
+  <button class="secondary" onclick="show('online')">🌐 友達とオンライン</button>
+  <button class="secondary" onclick="show('rules')">📜 遊び方</button>
+ </div>
+ <p class="muted center">ブラウザで遊べるオリジナル試作版</p>
+</section>
+<section id="online" class="screen">
+ <div class="panel">
+  <div class="big">🌐 オンライン対戦</div>
+  <p>友達と同じルームに入って対戦するための画面だよ。</p>
+  <div class="note">オンライン対戦を実際に接続するには、対戦サーバーの公開・設定が必要です。この単体HTML版では、ルーム作成や通信対戦はまだ有効になっていません。</div>
+  <label for="room">ルームコード（準備中）</label><input id="room" placeholder="例：HOSHI-1234" disabled>
+  <div class="actions"><button disabled>ルームを作成</button><button class="secondary" disabled>参加する</button></div>
+ </div>
+ <button class="secondary" onclick="show('home')">戻る</button>
+</section>
+<section id="rules" class="screen">
+ <div class="panel">
+  <div class="big">📜 遊び方</div>
+  <p>・自分と相手は最初に<strong>30 HP</strong>、手札4枚で開始。</p>
+  <p>・自分のターンにカードを1枚選んで使う。</p>
+  <p>・攻撃は相手のHPを減らし、防御は次に受ける攻撃を軽減。回復はHPを戻す。</p>
+  <p>・武器カードは次の攻撃を強化する。</p>
+  <p>・カードを使うと1枚補充。相手のHPを0にしたら勝利！</p>
+  <p class="muted">カード効果やバランスは試作版の設定です。</p>
+ </div><button class="secondary" onclick="show('home')">戻る</button>
+</section>
+<section id="game" class="screen">
+ <div class="topline"><button class="secondary" onclick="if(confirm('対戦を終了する？'))show('home')">← メニュー</button><span class="muted" id="turnLabel">あなたのターン</span></div>
+ <div class="panel">
+  <div class="battlefield">
+   <div class="fighter">
+    <div class="avatar">🧙</div><h3>あなた</h3><div><b id="pHp">30</b> / 30 HP</div><div class="hpbar"><div id="pBar" class="hpfill"></div></div>
+    <div class="stats"><span class="stat">🛡️ 防御 <b id="pGuard">0</b></span><span class="stat">⚔️ 武器 <b id="pWeapon">0</b></span></div>
+   </div>
+   <div class="fighter">
+    <div class="avatar">👹</div><h3>CPU</h3><div><b id="eHp">30</b> / 30 HP</div><div class="hpbar"><div id="eBar" class="hpfill"></div></div>
+    <div class="stats"><span class="stat">🛡️ 防御 <b id="eGuard">0</b></span><span class="stat">⚔️ 武器 <b id="eWeapon">0</b></span></div>
+   </div>
+  </div>
+ </div>
+ <div class="panel"><div class="topline"><b>あなたの手札</b><span class="muted" id="handCount">4枚</span></div><div id="hand" class="hand"></div><div class="actions"><button class="secondary" onclick="drawForTurn()" id="drawBtn">カードを引く</button></div><p class="muted">カードを使うと自動で1枚補充されるよ。</p></div>
+ <div class="panel"><b>⚡ 戦況ログ</b><div id="log" class="log" aria-live="polite"></div></div>
+</section>
+<section id="result" class="screen">
+ <div class="panel center"><div id="resultIcon" style="font-size:58px">🏆</div><div class="big" id="resultTitle">勝利！</div><p id="resultText"></p><button onclick="startGame()">もう一度対戦</button><button class="secondary" onclick="show('home')">メニューへ</button></div>
+</section>
+</main>
+<footer>もぐワールド・ブラウザ試作版 / オリジナル作品</footer>
+<script>
+const cards=[
+ {name:"星火の矢",icon:"🏹",type:"attack",power:7,desc:"相手に7ダメージ",cost:"攻撃"},
+ {name:"蒼雷",icon:"⚡",type:"attack",power:10,desc:"相手に10ダメージ",cost:"攻撃"},
+ {name:"流星落とし",icon:"☄️",type:"attack",power:13,desc:"相手に13ダメージ",cost:"攻撃"},
+ {name:"小さな癒やし",icon:"💚",type:"heal",power:7,desc:"自分のHPを7回復",cost:"回復"},
+ {name:"生命の泉",icon:"🌿",type:"heal",power:12,desc:"自分のHPを12回復",cost:"回復"},
+ {name:"守護の盾",icon:"🛡️",type:"guard",power:6,desc:"次の攻撃を6軽減",cost:"防御"},
+ {name:"聖なる結界",icon:"🔰",type:"guard",power:10,desc:"次の攻撃を10軽減",cost:"防御"},
+ {name:"勇者の剣",icon:"⚔️",type:"weapon",power:4,desc:"次の攻撃を4強化",cost:"装備"},
+ {name:"神鉄の槍",icon:"🔱",type:"weapon",power:7,desc:"次の攻撃を7強化",cost:"装備"}
+];
+let player,enemy,hand,turn,locked,logLines;
+function show(id){document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active')}
+function randCard(){return {...cards[Math.floor(Math.random()*cards.length)]}}
+function startGame(){
+ player={hp:30,guard:0,weapon:0};enemy={hp:30,guard:0,weapon:0};hand=Array.from({length:4},randCard);turn=0;locked=false;logLines=[];
+ addLog("⚔️ 神域デュエル開始！あなたのターン。");render();show('game');
+}
+function addLog(s){logLines.unshift(s);document.getElementById('log').innerHTML=logLines.slice(0,18).map(x=>'・'+x).join('<br>')}
+function render(){
+ document.getElementById('pHp').textContent=player.hp;document.getElementById('eHp').textContent=enemy.hp;
+ document.getElementById('pBar').style.width=Math.max(0,player.hp/30*100)+'%';document.getElementById('eBar').style.width=Math.max(0,enemy.hp/30*100)+'%';
+ document.getElementById('pGuard').textContent=player.guard;document.getElementById('eGuard').textContent=enemy.guard;
+ document.getElementById('pWeapon').textContent=player.weapon;document.getElementById('eWeapon').textContent=enemy.weapon;
+ document.getElementById('handCount').textContent=hand.length+'枚';document.getElementById('turnLabel').textContent=locked?'CPUのターン…':'あなたのターン';
+ document.getElementById('hand').innerHTML='';
+ hand.forEach((c,i)=>{let b=document.createElement('button');b.className='card';b.disabled=locked;b.innerHTML=`<span class="ico">${c.icon}</span><strong>${c.name}</strong><small>${c.desc}</small><em>${c.cost}</em>`;b.onclick=()=>useCard(i);document.getElementById('hand').appendChild(b)});
+ document.getElementById('drawBtn').disabled=locked;
+}
+function damage(target,amount){let blocked=Math.min(target.guard,amount);target.guard-=blocked;let actual=amount-blocked;target.hp=Math.max(0,target.hp-actual);return {blocked,actual}}
+function useCard(i){
+ if(locked)return;let c=hand.splice(i,1)[0];
+ if(c.type==='attack'){let power=c.power+player.weapon;player.weapon=0;let r=damage(enemy,power);addLog(`${c.name}！ CPUに${r.actual}ダメージ（${r.blocked}軽減）`)}
+ if(c.type==='heal'){let before=player.hp;player.hp=Math.min(30,player.hp+c.power);addLog(`${c.name}！ HPが${player.hp-before}回復`)}
+ if(c.type==='guard'){player.guard+=c.power;addLog(`${c.name}！ 防御力+${c.power}`)}
+ if(c.type==='weapon'){player.weapon+=c.power;addLog(`${c.name}を装備！ 次の攻撃+${c.power}`)}
+ if(checkEnd())return;
+ hand.push(randCard());locked=true;render();setTimeout(cpuTurn,850);
+}
+function drawForTurn(){if(locked)return;hand.push(randCard());addLog("カードを1枚引いた。");locked=true;render();setTimeout(cpuTurn,850)}
+function cpuTurn(){
+ if(enemy.hp<=0)return;let options=cards.map((c,i)=>({...c}));let c;
+ if(enemy.hp<=15&&Math.random()<.7)c=options.filter(x=>x.type==='heal').sort((a,b)=>b.power-a.power)[0];
+ else if(player.weapon>0&&Math.random()<.35)c=options.filter(x=>x.type==='guard').sort((a,b)=>b.power-a.power)[0];
+ else if(enemy.hp<18&&Math.random()<.25)c=options.filter(x=>x.type==='guard').sort((a,b)=>b.power-a.power)[0];
+ else if(Math.random()<.18)c=options.filter(x=>x.type==='weapon').sort((a,b)=>b.power-a.power)[0];
+ else c=options.filter(x=>x.type==='attack').sort((a,b)=>b.power-a.power)[Math.floor(Math.random()*2)];
+ if(!c)c=randCard();
+ if(c.type==='attack'){let p=c.power+enemy.weapon;enemy.weapon=0;let r=damage(player,p);addLog(`CPUの${c.name}！ ${r.actual}ダメージ（${r.blocked}軽減）`)}
+ if(c.type==='heal'){let before=enemy.hp;enemy.hp=Math.min(30,enemy.hp+c.power);addLog(`CPUは${c.name}でHPを${enemy.hp-before}回復`)}
+ if(c.type==='guard'){enemy.guard+=c.power;addLog(`CPUは${c.name}で防御力+${c.power}`)}
+ if(c.type==='weapon'){enemy.weapon+=c.power;addLog(`CPUは${c.name}を装備！`)}
+ if(checkEnd())return;
+ locked=false;render();addLog("あなたのターン。");
+}
+function checkEnd(){
+ render();
+ if(player.hp<=0||enemy.hp<=0){
+  let win=enemy.hp<=0&&player.hp>0;document.getElementById('resultIcon').textContent=win?'🏆':'🌙';
+  document.getElementById('resultTitle').textContent=win?'勝利！':'敗北…';
+  document.getElementById('resultText').textContent=win?'CPUを倒した！神域の勝者はあなた！':'今回はCPUに敗れた。もう一度挑戦しよう！';
+  show('result');return true;
+ }return false;
+}
+</script>
+</body></html>
